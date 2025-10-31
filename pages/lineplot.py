@@ -34,7 +34,7 @@ layout = dbc.Container([
                     multiple=True
     )], className="row-titles"),
     dcc.Store(id="stored-data"),
-    dcc.Graph(id="line-plot"),
+    dcc.Graph(id="line-plot",),
     dcc.Dropdown(id="columns",options=["test","test2"], multi=True),
     html.Div(id="output-data-upload")
     ]),
@@ -101,7 +101,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     Input("stored-data", "data"),
     Input("columns", "value"),
 )
-def update_plot(data,header):
+def update_plot(data,headers):
     if data is None:
         return {}
     df = pd.DataFrame(data)
@@ -110,16 +110,19 @@ def update_plot(data,header):
     x = df.columns[0]
 
 
-
     fig = {
-        "data": [{
-            "type": "line",
-            "x": df[x],
-            "y": df[header[0]]
-        }],
+        "data": [],
         "layout": {
-            "title": f"Line Plot: {header[0]} vs. {x}"
+            "title": f"Line Plot: {', '.join(headers)} vs. {x}"
         }
     }
+
+    for h in headers:
+        fig["data"].append({
+            "type": "line",
+            "x": df[x],
+            "y": df[h],
+            "name": h  
+        })
 
     return fig
