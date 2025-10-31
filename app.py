@@ -16,10 +16,10 @@ from assets._nav import _nav
 app.layout = dbc.Container([
 	
 	dbc.Row([
-        dbc.Col([_nav], width = 2),
+        dbc.Col([_nav], width = 12),
         dbc.Col([
             dbc.Row([dash.page_container])
-	    ], width = 10),
+	    ], width = 12),
     ]),
      dcc.Store(id='browser-memo', data=dict(), storage_type='session')
 ], fluid=True)

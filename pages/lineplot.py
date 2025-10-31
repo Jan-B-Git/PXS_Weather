@@ -1,3 +1,4 @@
+from turtle import width
 import dash
 from dash import html
 import dash_bootstrap_components as dbc
@@ -11,7 +12,7 @@ import io
 import pandas as pd
 
 
-dash.register_page(__name__)
+dash.register_page(__name__, path='/')
 
 layout = dbc.Container([
     dbc.Row([
@@ -32,13 +33,13 @@ layout = dbc.Container([
                         "margin": "10px",
                     },
                     multiple=True
-    )], className="row-titles"),
+    )], className="row-titles",width=12),
     dcc.Store(id="stored-data"),
     dcc.Graph(id="line-plot",),
     dcc.Dropdown(id="columns",options=["test","test2"], multi=True),
     html.Div(id="output-data-upload")
     ]),
-])
+],fluid=True, className="full-layout")
 
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
@@ -93,7 +94,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
 
         return parsed, df.to_dict("records"),header
 
-    return None, None
+    return None, None,[]
 
 ###---- Plot
 @callback(
@@ -109,6 +110,8 @@ def update_plot(data,headers):
     
     x = df.columns[0]
 
+    if not headers:
+        return None
 
     fig = {
         "data": [],
