@@ -55,16 +55,26 @@ layout = dbc.Container([
 
         # Speicherbereich in Dash – speichert Daten unsichtbar im Browser
         dcc.Store(id="stored-data"),
-
         # Plot-Ausgabe (Plotly Graph)
-        dcc.Graph(id="line-plot"),
-
-        # Dropdown zur Auswahl der Spalten für den Plot (wird dynamisch gefüllt)
-        dcc.Dropdown(id="columns", options=["test","test2"], multi=True),
-
+        dbc.Col([
+            dcc.Graph(id="line-plot"),
+        ],width=12),
+        dbc.Row([
+            # Dropdown zur Auswahl der Spalten für den Plot (wird dynamisch gefüllt)
+            dbc.Col([
+                dcc.Dropdown(id="columns", options=["test","test2"], multi=True),
+            ],width=9),
+            dbc.Col([
+                dcc.Checklist(
+                    id="missing-data",
+                    options=["remove missing data"],
+                    value=["remove missing data"],
+                    ),
+            ],width=3),
+            ])
+        ]),
         # Hier wird die Tabelle nach Upload angezeigt
         html.Div(id="output-data-upload"),
-    ]),
 ], fluid=True, className="full-layout")
 
 
@@ -141,8 +151,9 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     Output("line-plot", "figure"),
     Input("stored-data", "data"),     # Daten aus Store
     Input("columns", "value"),        # ausgewählte Spalten aus Dropdown
-)
-def update_plot(data, headers):
+    Input("missing-data","value"),
+)   
+def update_plot(data, headers,missing_data):
     if data is None:
         return {}
 
@@ -155,10 +166,9 @@ def update_plot(data, headers):
     # Plotly Figure: definiert Daten + Layout
     fig = {
         "data": [],
-        "layout": {
-            "title": f"Liniendiagramm: {', '.join(headers)} vs. {x}"
-        }
     }
+    if missing_data:
+        df = df.replace(-999, pd.NA)
 
     for h in headers:
         fig["data"].append({
