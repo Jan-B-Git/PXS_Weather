@@ -57,7 +57,10 @@ layout = dbc.Container([
         dcc.Store(id="stored-data"),
         # Plot-Ausgabe (Plotly Graph)
         dbc.Col([
-            dcc.Graph(id="line-plot"),
+            dcc.Graph(
+                id="line-plot",
+                 style={"height": "600px"}
+                ),
         ],width=12),
         dbc.Row([
             # Dropdown zur Auswahl der Spalten für den Plot (wird dynamisch gefüllt)
@@ -166,6 +169,16 @@ def update_plot(data, headers,missing_data):
     # Plotly Figure: definiert Daten + Layout
     fig = {
         "data": [],
+        "layout": {
+            "legend": {
+                "orientation": "h", 
+                "yanchor": "bottom",
+                "y": 1.05,
+                "xanchor": "center",
+                "x": 0.5
+            },
+            "margin": {"l": 40, "r": 40, "t": 80, "b": 120}
+        }
     }
     if missing_data:
         df = df.replace(-999, pd.NA)
@@ -175,7 +188,18 @@ def update_plot(data, headers,missing_data):
             "type": "line",
             "x": df[x],
             "y": df[h],
-            "name": h
+            "name": h,
+            "layout": {
+                "title": f"Liniendiagramm: {', '.join(headers)} vs. {x}",
+                "legend": {
+                    "orientation": "h",
+                    "yanchor": "bottom",
+                    "y": 1.05,
+                    "xanchor": "center",
+                    "x": 0.5
+                },
+                "margin": {"l": 40, "r": 40, "t": 80, "b": 80}
+}
         })
 
     return fig
