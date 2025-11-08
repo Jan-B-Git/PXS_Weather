@@ -99,7 +99,7 @@ layout = dbc.Container([
         ]),
         
         # Tab 2: Tabellen-Ansicht
-        dcc.Tab(label="Daten Tabelle", value="tab-table", children=[
+        dcc.Tab(label="Data table", value="tab-table", children=[
             html.Div(id="output-data-upload", className="mt-3"),
         ]),
     ]),
@@ -127,7 +127,7 @@ def load_csv_options(_):
 def load_selected_csvs(selected_files):
     """Lädt alle ausgewählten CSV-Dateien"""
     if not selected_files:
-        return None, [], html.Div("Keine Dateien ausgewählt")
+        return None, [], html.Div("No Data choiced")
     
     data_folder = Path("data")
     all_data = {}
@@ -205,7 +205,7 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
         return {
             "data": [],
             "layout": {
-                "title": "Bitte CSV-Dateien und Spalten auswählen",
+                "title": "Pls choice CSV data and a column",
                 "xaxis": {"title": "X"},
                 "yaxis": {"title": "Y"}
             }
