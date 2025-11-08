@@ -20,7 +20,6 @@ dash.register_page(__name__, path="/")
 
 # Funktion um CSV-Dateien aus dem data-Ordner zu laden
 def get_csv_files_from_data_folder():
-    """Liest alle CSV-Dateien aus dem 'data' Ordner"""
     data_folder = Path("data")
     if not data_folder.exists():
         return []
@@ -42,14 +41,14 @@ layout = dbc.Container([
                                 id="csv-file-selector",
                                 options=[],
                                 value=[],
-                                labelStyle={"display": "inline-block", "margin-top":"15px"}
+                                labelStyle={"display": "inline-block", "margin-right": "15px", "margin-top":"15px"}
                             ),
-                        ],width=6),
+                        ], width=6),
                         dbc.Col([
-                            dcc.Dropdown(id="columns", options=[], multi=True,style={"margin": "15px 0"}),
-                        ],width=5),
+                            dcc.Dropdown(id="columns", options=[], multi=True, placeholder="Select Column ...", style={"margin": "15px 0"}),
+                        ], width=6),
                     ]),
-                ]),
+                ], width=7),
                 dbc.Col([
                     html.H4("Settings", className="mt-3"),
                     dbc.Row([
@@ -60,33 +59,31 @@ layout = dbc.Container([
                                 value=["remove missing data"],
                                 style={"margin": "15px 0"}
                             ),
-                        ], width=5),
+                        ], width=6),
                         dbc.Col([ 
-                            html.Label("Window size (Jahre)"),
+                            html.Label("Moving Average (Years)"),
                             dcc.Slider(
                                 min=0,
                                 max=5,
-                                step=1/2,
+                                step=0.5,
                                 value=0,
                                 id="moving-average-window",
                                 marks={i: f"{i}" for i in range(6)},
                                 tooltip={"placement": "bottom", "always_visible": True}
                             ),
-                        ], width=5)
+                        ], width=6)
                     ])
-
-                ],width=5),
+                ], width=5),
             ]),
-            # Speicherbereich in Dash – speichert Daten unsichtbar im Browser
+            
             dcc.Store(id="stored-data"),
             dcc.Store(id="csv-files-data"),
             
             dbc.Row([
-                # Plot-Ausgabe
                 dbc.Col([
                     dcc.Graph(
                         id="line-plot",
-                        style={"height": "600px","margin":"15px"},
+                        style={"height": "600px", "margin":"15px"},
                     ),
                 ], width=12),
             ]),
@@ -132,6 +129,17 @@ def load_selected_csvs(selected_files):
         filepath = data_folder / f"{filename}.csv"
         try:
             df = pd.read_csv(filepath)
+            
+            # Erste Spalte als Datetime behandeln und sortieren
+            x_column = df.columns[0]
+            try:
+                df[x_column] = pd.to_datetime(df[x_column], errors='coerce')
+                df = df.sort_values(by=x_column).reset_index(drop=True)
+                # Als String speichern für JSON-Kompatibilität
+                df[x_column] = df[x_column].dt.strftime('%Y-%m-%d')
+            except:
+                pass
+            
             all_data[filename] = df.to_dict("records")
             all_columns.update(df.columns.tolist())
             
@@ -183,14 +191,20 @@ def update_plot(all_data, selected_columns, missing_data, window_years):
         }
     
     # Fenster in Tage umrechnen
-    if window_years==0:
-        window_days=1
-    else:
-        window_days = int(window_years * 365)
+    window_days = int(window_years * 365) if window_years > 0 else 0
+    
+
     
     fig = {
         "data": [],
         "layout": {
+            "xaxis": {
+                "type": "date",
+                "title": "Datum"
+            },
+            "yaxis": {
+                "title": "Wert"
+            },
             "legend": {
                 "orientation": "h", 
                 "yanchor": "bottom",
@@ -205,27 +219,32 @@ def update_plot(all_data, selected_columns, missing_data, window_years):
     # Durch alle CSV-Dateien iterieren
     for filename, data in all_data.items():
         df = pd.DataFrame(data)
+        x_column = df.columns[0]
+        
+        # Datumsspalte zurück zu Datetime konvertieren und sortieren
+        df[x_column] = pd.to_datetime(df[x_column], errors='coerce')
+        df = df.sort_values(by=x_column).reset_index(drop=True)
         
         # Missing data behandeln - erst zu NaN konvertieren
         if missing_data:
             df = df.replace(-999, float('nan'))
         
-        # Erste Spalte als X-Achse verwenden
-        x_column = df.columns[0]
-        
         # Für jede ausgewählte Spalte eine Linie hinzufügen
         for col in selected_columns:
             if col in df.columns and col != x_column:
-                # Spalte zu numerisch konvertieren
                 df[col] = pd.to_numeric(df[col], errors='coerce')
                 
-                y = df[col].rolling(window=window_days, center=True).mean()
+                if window_days > 0:
+                    y = df[col].rolling(window=window_days, center=True,min_periods=1).mean()
+                else:
+                    y = df[col]
+                
                 fig["data"].append({
-                    "type": "line",
+                    "type": "scatter",
                     "x": df[x_column],
                     "y": y,
                     "name": f"{filename} - {col}",
-                    "mode": "lines+markers"
+                    "mode": "lines"
                 })
     
     return fig
