@@ -35,48 +35,48 @@ layout = dbc.Container([
         dcc.Tab(label="Plot", value="tab-plot", children=[
             dbc.Row([
                 dbc.Col([
-                    html.H4("CSV-Dateien auswählen", className="mt-3"),
-                    dcc.Checklist(
-                        id="csv-file-selector",
-                        options=[],
-                        value=[],
-                        labelStyle={"display": "inline-block", "margin-right": "15px"}
-                    ),
-                ], width=7, className="mb-3"),
-                dbc.Col([
-                    html.Label("Spalten auswählen:"),
-                    dcc.Dropdown(id="columns", options=[], multi=True),
-                    dcc.Checklist(
-                        id="missing-data",
-                        options=["remove missing data"],
-                        value=["remove missing data"],
-                        style={"margin": "15px"}
-                    ),
+                    html.H4("Choice Data", className="mt-3"),
                     dbc.Row([
                         dbc.Col([
                             dcc.Checklist(
-                                id="moving-average",
-                                options=["moving average"],
+                                id="csv-file-selector",
+                                options=[],
                                 value=[],
-                                style={"margin": "15px"}
+                                labelStyle={"display": "inline-block", "margin-top":"15px"}
                             ),
-                        ], width=4),
+                        ],width=6),
                         dbc.Col([
+                            dcc.Dropdown(id="columns", options=[], multi=True,style={"margin": "15px 0"}),
+                        ],width=5),
+                    ]),
+                ]),
+                dbc.Col([
+                    html.H4("Settings", className="mt-3"),
+                    dbc.Row([
+                        dbc.Col([
+                            dcc.Checklist(
+                                id="missing-data",
+                                options=["remove missing data"],
+                                value=["remove missing data"],
+                                style={"margin": "15px 0"}
+                            ),
+                        ], width=5),
+                        dbc.Col([ 
                             html.Label("Window size (Jahre)"),
                             dcc.Slider(
                                 min=0,
                                 max=5,
                                 step=1/2,
-                                value=3,
+                                value=0,
                                 id="moving-average-window",
                                 marks={i: f"{i}" for i in range(6)},
                                 tooltip={"placement": "bottom", "always_visible": True}
                             ),
-                        ], width=8)
+                        ], width=5)
                     ])
-                ], width=5),
+
+                ],width=5),
             ]),
-            
             # Speicherbereich in Dash – speichert Daten unsichtbar im Browser
             dcc.Store(id="stored-data"),
             dcc.Store(id="csv-files-data"),
@@ -168,10 +168,9 @@ def load_selected_csvs(selected_files):
     Input("csv-files-data", "data"),
     Input("columns", "value"),
     Input("missing-data", "value"),
-    Input("moving-average", "value"),
     Input("moving-average-window", "value")
 )   
-def update_plot(all_data, selected_columns, missing_data, moving_average, window_years):
+def update_plot(all_data, selected_columns, missing_data, window_years):
     """Erstellt Plot mit Daten aus mehreren CSVs"""
     if not all_data or not selected_columns:
         return {
@@ -184,7 +183,10 @@ def update_plot(all_data, selected_columns, missing_data, moving_average, window
         }
     
     # Fenster in Tage umrechnen
-    window_days = int(window_years * 365)
+    if window_years==0:
+        window_days=1
+    else:
+        window_days = int(window_years * 365)
     
     fig = {
         "data": [],
@@ -217,11 +219,7 @@ def update_plot(all_data, selected_columns, missing_data, moving_average, window
                 # Spalte zu numerisch konvertieren
                 df[col] = pd.to_numeric(df[col], errors='coerce')
                 
-                if moving_average and window_days > 0:
-                    y = df[col].rolling(window=window_days, center=True).mean()
-                else:
-                    y = df[col]
-                
+                y = df[col].rolling(window=window_days, center=True).mean()
                 fig["data"].append({
                     "type": "line",
                     "x": df[x_column],
