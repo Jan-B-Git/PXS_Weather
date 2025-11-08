@@ -9,6 +9,7 @@
 import dash
 from dash import html, dcc, dash_table, Input, Output, State, callback
 import dash_bootstrap_components as dbc
+import plotly.graph_objects as go
 import pandas as pd
 import base64
 import io
@@ -47,6 +48,7 @@ layout = dbc.Container([
                         ], width=6),
                         dbc.Col([
                             dcc.Dropdown(id="columns", options=[], multi=True, placeholder="Select Column ...", style={"margin": "15px 0"}),
+                            dcc.Dropdown(id="plots", options=["line-plot","heatmap"], placeholder="Select Plot type...", style={"margin": "15px 0"}),
                         ], width=6),
                     ]),
                 ], width=7),
@@ -199,8 +201,9 @@ def load_selected_csvs(selected_files):
     Input("missing-data", "value"),
     Input("moving-average-window", "value"),
     Input("common-timerange","value"),
+    Input("plots","value")
 )   
-def update_plot(all_data, selected_columns, missing_data, window_years,common_timerange):
+def update_plot(all_data, selected_columns, missing_data, window_years,common_timerange,plot_type):
     if not all_data or not selected_columns:
         return {
             "data": [],
@@ -210,6 +213,7 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
                 "yaxis": {"title": "Y"}
             }
         }
+
     common_start=None
     common_end=None
     if common_timerange:
@@ -217,74 +221,71 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
             df = pd.DataFrame(data)
             x_col = df.columns[0]
             df[x_col] = pd.to_datetime(df[x_col], errors='coerce')
+            df = df.sort_values(by=x_col).reset_index(drop=True)
+            if missing_data:
+                df = df.replace(-999, float('nan'))
+
             if common_end is None and common_end is None:
                 common_start = df[x_col].min() 
                 common_end = df[x_col].max() 
             common_start = df[x_col].min()  if common_start < df[x_col].min()  else common_start
             common_end = df[x_col].max()  if common_end > df[x_col].max()  else common_end
 
-    
-    # Fenster in Tage umrechnen
+
     window_days = int(window_years * 365) if window_years > 0 else 0
-    
-    
-    fig = {
-        "data": [],
-        "layout": {
-            "xaxis": {
-                "type": "date",
-                "title": "Datum"
-            },
-            "yaxis": {
-                "title": "Wert"
-            },
-            "legend": {
-                "orientation": "h", 
-                "yanchor": "bottom",
-                "y": 1.05,
-                "xanchor": "center",
-                "x": 0.5
-            },
-            "margin": {"l": 40, "r": 40, "t": 80, "b": 120}
-        }
-    }
-    
-    # Durch alle CSV-Dateien iterieren
+     
+
+    fig = go.Figure()
+
+    heatmap_z = []
+    heatmap_ylabels = []
+
     for filename, data in all_data.items():
         df = pd.DataFrame(data)
         x_column = df.columns[0]
-        
-        # Datumsspalte zurück zu Datetime konvertieren
         df[x_column] = pd.to_datetime(df[x_column], errors='coerce')
-        
-        # Nach Datum sortieren
         df = df.sort_values(by=x_column).reset_index(drop=True)
-        
-        # Missing data behandeln - erst zu NaN konvertieren
+
         if missing_data:
             df = df.replace(-999, float('nan'))
 
-        if common_timerange and common_start and common_end:
-            df = df[(df[x_column] >= common_start) & (df[x_column] <= common_end)]        
-        # Für jede ausgewählte Spalte eine Linie hinzufügen
+        if common_timerange and common_start is not None and common_end is not None:
+            df = df[(df[x_column] >= common_start) & (df[x_column] <= common_end)]
+
+        # Spalten durchgehen
         for col in selected_columns:
             if col in df.columns and col != x_column:
-                # Spalte zu numerisch konvertieren
                 df[col] = pd.to_numeric(df[col], errors='coerce')
-                
-                # Moving Average nur wenn window_days > 0
-                if window_days > 0:
-                    # min_periods=1 damit auch bei NaN-Werten berechnet wird
-                    y = df[col].rolling(window=window_days, center=True, min_periods=1).mean()
-                else:
-                    y = df[col]
-                
-                fig["data"].append({
-                    "type": "scatter",
-                    "x": df[x_column],
-                    "y": y,
-                    "name": f"{filename} - {col}",
-                    "mode": "lines"
-                })
-    
+
+                y = df[col].rolling(window=window_days, center=True, min_periods=1).mean() \
+                    if window_days > 0 else df[col]
+
+                if plot_type == "line-plot":
+                    fig.add_trace(go.Scatter(
+                        x=df[x_column],
+                        y=y,
+                        name=f"{filename} - {col}",
+                        mode="lines"
+                    ))
+
+                if plot_type == "heatmap":
+                    heatmap_z.append(y.tolist())
+                    heatmap_ylabels.append(f"{filename} - {col}")
+
+
+    if plot_type == "heatmap":
+        fig.add_trace(go.Heatmap(
+            z=heatmap_z,
+            x=df[x_column],
+            y=heatmap_ylabels,
+            colorscale="Viridis"
+        ))
+
+    fig.update_layout(
+        xaxis={"type": "date", "title": "Datum"},
+        yaxis={"title": "Wert"},
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1.05, "xanchor": "center", "x": 0.5},
+        margin={"l": 40, "r": 40, "t": 80, "b": 120}
+    )
+
     return fig
