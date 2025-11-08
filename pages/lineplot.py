@@ -20,6 +20,7 @@ dash.register_page(__name__, path="/")
 
 # Funktion um CSV-Dateien aus dem data-Ordner zu laden
 def get_csv_files_from_data_folder():
+    """Liest alle CSV-Dateien aus dem 'data' Ordner"""
     data_folder = Path("data")
     if not data_folder.exists():
         return []
@@ -82,10 +83,12 @@ layout = dbc.Container([
                 ], width=5),
             ]),
             
+            # Speicherbereich in Dash – speichert Daten unsichtbar im Browser
             dcc.Store(id="stored-data"),
             dcc.Store(id="csv-files-data"),
             
             dbc.Row([
+                # Plot-Ausgabe
                 dbc.Col([
                     dcc.Graph(
                         id="line-plot",
@@ -139,7 +142,19 @@ def load_selected_csvs(selected_files):
             # Erste Spalte als Datetime behandeln und sortieren
             x_column = df.columns[0]
             try:
-                df[x_column] = pd.to_datetime(df[x_column], errors='coerce')
+                # Versuche verschiedene Datumsformate
+                if df[x_column].dtype == 'object':
+                    # Format DD.MM.YYYY (z.B. 10.06.2011)
+                    if '.' in str(df[x_column].iloc[0]):
+                        df[x_column] = pd.to_datetime(df[x_column], format='%d.%m.%Y', errors='coerce')
+                    # Format YYYYMMDD (z.B. 20110610)
+                    elif len(str(df[x_column].iloc[0])) == 8:
+                        df[x_column] = pd.to_datetime(df[x_column], format='%Y%m%d', errors='coerce')
+                    else:
+                        df[x_column] = pd.to_datetime(df[x_column], errors='coerce')
+                else:
+                    df[x_column] = pd.to_datetime(df[x_column], errors='coerce')
+                
                 df = df.sort_values(by=x_column).reset_index(drop=True)
                 # Als String speichern für JSON-Kompatibilität
                 df[x_column] = df[x_column].dt.strftime('%Y-%m-%d')
@@ -186,7 +201,6 @@ def load_selected_csvs(selected_files):
     Input("common-timerange","value"),
 )   
 def update_plot(all_data, selected_columns, missing_data, window_years,common_timerange):
-    """Erstellt Plot mit Daten aus mehreren CSVs"""
     if not all_data or not selected_columns:
         return {
             "data": [],
@@ -213,7 +227,6 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
     # Fenster in Tage umrechnen
     window_days = int(window_years * 365) if window_years > 0 else 0
     
-
     
     fig = {
         "data": [],
@@ -241,8 +254,10 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
         df = pd.DataFrame(data)
         x_column = df.columns[0]
         
-        # Datumsspalte zurück zu Datetime konvertieren und sortieren
+        # Datumsspalte zurück zu Datetime konvertieren
         df[x_column] = pd.to_datetime(df[x_column], errors='coerce')
+        
+        # Nach Datum sortieren
         df = df.sort_values(by=x_column).reset_index(drop=True)
         
         # Missing data behandeln - erst zu NaN konvertieren
@@ -254,10 +269,13 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
         # Für jede ausgewählte Spalte eine Linie hinzufügen
         for col in selected_columns:
             if col in df.columns and col != x_column:
+                # Spalte zu numerisch konvertieren
                 df[col] = pd.to_numeric(df[col], errors='coerce')
                 
+                # Moving Average nur wenn window_days > 0
                 if window_days > 0:
-                    y = df[col].rolling(window=window_days, center=True,min_periods=1).mean()
+                    # min_periods=1 damit auch bei NaN-Werten berechnet wird
+                    y = df[col].rolling(window=window_days, center=True, min_periods=1).mean()
                 else:
                     y = df[col]
                 
