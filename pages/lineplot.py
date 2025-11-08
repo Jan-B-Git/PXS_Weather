@@ -59,6 +59,12 @@ layout = dbc.Container([
                                 value=["remove missing data"],
                                 style={"margin": "15px 0"}
                             ),
+                            dcc.Checklist(
+                                id="common-timerange",
+                                options=["common timerange"],
+                                value=[],
+                                style={"margin": "15px 0"}
+                            ),
                         ], width=6),
                         dbc.Col([ 
                             html.Label("Moving Average (Years)"),
@@ -176,9 +182,10 @@ def load_selected_csvs(selected_files):
     Input("csv-files-data", "data"),
     Input("columns", "value"),
     Input("missing-data", "value"),
-    Input("moving-average-window", "value")
+    Input("moving-average-window", "value"),
+    Input("common-timerange","value"),
 )   
-def update_plot(all_data, selected_columns, missing_data, window_years):
+def update_plot(all_data, selected_columns, missing_data, window_years,common_timerange):
     """Erstellt Plot mit Daten aus mehreren CSVs"""
     if not all_data or not selected_columns:
         return {
@@ -189,6 +196,19 @@ def update_plot(all_data, selected_columns, missing_data, window_years):
                 "yaxis": {"title": "Y"}
             }
         }
+    common_start=None
+    common_end=None
+    if common_timerange:
+        for filename, data in all_data.items():
+            df = pd.DataFrame(data)
+            x_col = df.columns[0]
+            df[x_col] = pd.to_datetime(df[x_col], errors='coerce')
+            if common_end is None and common_end is None:
+                common_start = df[x_col].min() 
+                common_end = df[x_col].max() 
+            common_start = df[x_col].min()  if common_start < df[x_col].min()  else common_start
+            common_end = df[x_col].max()  if common_end > df[x_col].max()  else common_end
+
     
     # Fenster in Tage umrechnen
     window_days = int(window_years * 365) if window_years > 0 else 0
@@ -228,7 +248,9 @@ def update_plot(all_data, selected_columns, missing_data, window_years):
         # Missing data behandeln - erst zu NaN konvertieren
         if missing_data:
             df = df.replace(-999, float('nan'))
-        
+
+        if common_timerange and common_start and common_end:
+            df = df[(df[x_column] >= common_start) & (df[x_column] <= common_end)]        
         # Für jede ausgewählte Spalte eine Linie hinzufügen
         for col in selected_columns:
             if col in df.columns and col != x_column:
