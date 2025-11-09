@@ -58,15 +58,21 @@ layout = dbc.Container([
                         dbc.Col([
                             dcc.Checklist(
                                 id="missing-data",
-                                options=["remove missing data"],
-                                value=["remove missing data"],
-                                style={"margin": "15px 0"}
+                                options=["Remove Missing Data"],
+                                value=[],
+                                style={"margin": "10px 0"}
                             ),
                             dcc.Checklist(
                                 id="common-timerange",
-                                options=["common timerange"],
+                                options=["Common Timerange"],
                                 value=[],
-                                style={"margin": "15px 0"}
+                                style={"margin": "10px 0"}
+                            ),
+                            dcc.Checklist(
+                                id="yearly-mean",
+                                options=["Yearly Mean"],
+                                value=[],
+                                style={"margin": "10px 0"}
                             ),
                         ], width=6),
                         dbc.Col([ 
@@ -201,9 +207,10 @@ def load_selected_csvs(selected_files):
     Input("missing-data", "value"),
     Input("moving-average-window", "value"),
     Input("common-timerange","value"),
-    Input("plots","value")
+    Input("plots","value"),
+    Input("yearly-mean","value"),
 )   
-def update_plot(all_data, selected_columns, missing_data, window_years,common_timerange,plot_type):
+def update_plot(all_data, selected_columns, missing_data, window_years,common_timerange,plot_type,yearly_mean):
     if not all_data or not selected_columns:
         return {
             "data": [],
@@ -251,18 +258,33 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
 
         if common_timerange and common_start is not None and common_end is not None:
             df = df[(df[x_column] >= common_start) & (df[x_column] <= common_end)]
+    
+
 
         # Spalten durchgehen
         for col in selected_columns:
             if col in df.columns and col != x_column:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
+                df["year"] = df[x_column].dt.year
+                annual_mean = df.groupby("year")[col].mean()
+
+                # x = Jahre, y = Mittelwerte
+                x_mean = annual_mean.index
+                y_mean = annual_mean.values
+
                 y = df[col].rolling(window=window_days, center=True, min_periods=1).mean() \
                     if window_days > 0 else df[col]
 
                 if plot_type == "line-plot":
+                    if yearly_mean:
+                        x=x_mean
+                        y=y_mean
+                    else:
+                        x=df[x_column]
+
                     fig.add_trace(go.Scatter(
-                        x=df[x_column],
+                        x=x,
                         y=y,
                         name=f"{filename} - {col}",
                         mode="lines"
