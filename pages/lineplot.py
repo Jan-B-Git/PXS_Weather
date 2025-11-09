@@ -74,6 +74,12 @@ layout = dbc.Container([
                                 value=[],
                                 style={"margin": "10px 0"}
                             ),
+                            dcc.Checklist(
+                                id="snowdays",
+                                options=["Snow days"],
+                                value=[],
+                                style={"margin": "10px 0"}
+                            ),
                         ], width=6),
                         dbc.Col([ 
                             html.Label("Moving Average (Years)"),
@@ -209,9 +215,10 @@ def load_selected_csvs(selected_files):
     Input("common-timerange","value"),
     Input("plots","value"),
     Input("yearly-mean","value"),
+    Input("snowdays","value")
 )   
-def update_plot(all_data, selected_columns, missing_data, window_years,common_timerange,plot_type,yearly_mean):
-    if not all_data or not selected_columns:
+def update_plot(all_data, selected_columns, missing_data, window_years,common_timerange,plot_type,yearly_mean,snowdays):
+    if not all_data or not selected_columns and not snowdays:
         return {
             "data": [],
             "layout": {
@@ -260,14 +267,26 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
             df = df[(df[x_column] >= common_start) & (df[x_column] <= common_end)]
     
 
+        if  snowdays:
+            df["year"] = df[x_column].dt.year
+            snow_days=df[" SCHNEEHOEHE"].gt(0).groupby(df["year"]).sum()
+            return  fig.add_trace(go.Scatter(
+                        x=snow_days.index,
+                        y=snow_days,
+                        mode="lines"
+                    ))
+
+
 
         # Spalten durchgehen
         for col in selected_columns:
+            
             if col in df.columns and col != x_column:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
 
                 df["year"] = df[x_column].dt.year
                 annual_mean = df.groupby("year")[col].mean()
+
 
                 # x = Jahre, y = Mittelwerte
                 x_mean = annual_mean.index
