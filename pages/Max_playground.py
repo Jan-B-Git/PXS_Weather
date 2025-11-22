@@ -12,7 +12,10 @@ df.columns = df.columns.str.strip()  # remove whitespace from column names
 df['DATE'] = pd.to_datetime(df['DATE'], format='%d.%m.%Y')
 df = df.replace(-999, pd.NA)
 #df_desc=df['DATE']
-df_desc=df.drop(columns=['DATE','MESS_DATUM','SCHNEEHOEHE','QUALITAETS_NIVEAU'])
+#prepare table
+df_desc=df.drop(columns=['DATE','MESS_DATUM','LUFTTEMP_AM_ERDB_MINIMUM','WINDSPITZE_MAXIMUM','SCHNEEHOEHE','QUALITAETS_NIVEAU','DAMPFDRUCK','BEDECKUNGSGRAD','WINDGESCHWINDIGKEIT','SONNENSCHEINDAUER'])
+for col in df_desc.columns:
+    df_desc[col] = pd.to_numeric(df[col], errors='raise')
 df_desc = df_desc.describe(include='all')
 df_desc = df_desc.loc[['mean', 'std', 'min', 'max']].reset_index().rename(columns={'index': 'Statistik'})
 
@@ -20,11 +23,23 @@ df1 = pd.read_csv('data/Straubing.csv', sep=',\s*', engine='python')  # handle s
 df1.columns = df.columns.str.strip()  # remove whitespace from column names
 df1['DATE'] = pd.to_datetime(df1['DATE'], format='%d.%m.%Y')
 df1 = df1.replace(-999, pd.NA)
+#prepare table
+df1_desc=df1.drop(columns=['DATE','MESS_DATUM','LUFTTEMP_AM_ERDB_MINIMUM','WINDSPITZE_MAXIMUM','SCHNEEHOEHE','QUALITAETS_NIVEAU','DAMPFDRUCK','BEDECKUNGSGRAD','WINDGESCHWINDIGKEIT','SONNENSCHEINDAUER'])
+for col in df1_desc.columns:
+    df1_desc[col] = pd.to_numeric(df1_desc[col], errors='raise')
+df1_desc = df1_desc.describe(include='all')
+df1_desc = df1_desc.loc[['mean', 'std', 'min', 'max']].reset_index().rename(columns={'index': 'Statistik'})
 
 df2 = pd.read_csv('data/Schorndorf.csv', sep=',\s*', engine='python')  # handle spaces after comma
 df2.columns = df.columns.str.strip()  # remove whitespace from column names
 df2['DATE'] = pd.to_datetime(df2['DATE'], format='%d.%m.%Y')
 df2 = df2.replace(-999, pd.NA)
+#prepare table
+df2_desc=df2.drop(columns=['DATE','MESS_DATUM','LUFTTEMP_AM_ERDB_MINIMUM','WINDSPITZE_MAXIMUM','SCHNEEHOEHE','QUALITAETS_NIVEAU','DAMPFDRUCK','BEDECKUNGSGRAD','WINDGESCHWINDIGKEIT','SONNENSCHEINDAUER'])
+for col in df2_desc.columns:
+    df2_desc[col] = pd.to_numeric(df2_desc[col], errors='raise')
+df2_desc = df2_desc.describe(include='all')
+df2_desc = df2_desc.loc[['mean', 'std', 'min', 'max']].reset_index().rename(columns={'index': 'Statistik'})
 
 # Create the figure
 fig = px.line(  
@@ -76,7 +91,6 @@ fig5 = px.line(
 )
 
 layout = dbc.Container([
-    # title
     dbc.Row([
         dbc.Col([
             html.H3(['Trends Temperatur und Niederschlag']),
@@ -139,6 +153,30 @@ layout = dbc.Container([
                 id='describe-table-arber',
                 columns=[{"name": c, "id": c} for c in df_desc.columns],
                 data=df_desc.to_dict('records'),
+                style_table={'overflowX': 'auto'},
+                page_size=10
+            )
+        ])
+    ]),
+        dbc.Row([
+        dbc.Col([
+            html.H4("Descriptive statistics — Straubing"),
+            dash_table.DataTable(
+                id='describe-table-arber',
+                columns=[{"name": c, "id": c} for c in df1_desc.columns],
+                data=df1_desc.to_dict('records'),
+                style_table={'overflowX': 'auto'},
+                page_size=10
+            )
+        ])
+    ]),
+        dbc.Row([
+        dbc.Col([
+            html.H4("Descriptive statistics — Schorndorf"),
+            dash_table.DataTable(
+                id='describe-table-arber',
+                columns=[{"name": c, "id": c} for c in df2_desc.columns],
+                data=df2_desc.to_dict('records'),
                 style_table={'overflowX': 'auto'},
                 page_size=10
             )
