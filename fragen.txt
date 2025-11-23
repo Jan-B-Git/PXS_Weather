@@ -1,0 +1,17 @@
+# Fragen:
+
+	Tabelle durchsprechen. Was bedeuten die Spalten 
+	Wie interpretieren wie die Schneehöhe?
+
+
+to-do
+
+Max
+	Korrelationsmatrix
+	yearly mean 
+	vergleich von dem ältesten und neusten Jahr / Plot und statisic 
+
+Jan
+	snow_days auf extra Seite implementieren
+	wie viele tage aber auch wie viel schnemasse?
+	Letzen Punkt anschauen und evtl was implementieren.(Vorlesung anschauen- 2 Modelle daraus)
