@@ -48,7 +48,7 @@ layout = dbc.Container([
                         ], width=6),
                         dbc.Col([
                             dcc.Dropdown(id="columns", options=[], multi=True, placeholder="Select Column ...", style={"margin": "15px 0"}),
-                            dcc.Dropdown(id="plots", options=["line-plot","heatmap"], placeholder="Select Plot type...", style={"margin": "15px 0"}),
+                            dcc.Dropdown(id="plots", value="line-plot",options=["line-plot"], placeholder="Select Plot type...", style={"margin": "15px 0"}),
                         ], width=6),
                     ]),
                 ], width=7),
@@ -309,18 +309,6 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
                         mode="lines"
                     ))
 
-                if plot_type == "heatmap":
-                    heatmap_z.append(y.tolist())
-                    heatmap_ylabels.append(f"{filename} - {col}")
-
-
-    if plot_type == "heatmap":
-        fig.add_trace(go.Heatmap(
-            z=heatmap_z,
-            x=df[x_column],
-            y=heatmap_ylabels,
-            colorscale="Viridis"
-        ))
 
     fig.update_layout(
         xaxis={"type": "date", "title": "Datum"},
