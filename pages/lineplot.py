@@ -208,6 +208,7 @@ def load_selected_csvs(selected_files):
 # == CALLBACK: Plot zeichnen ============================================================
 @callback(
     Output("line-plot", "figure"),
+
     Input("csv-files-data", "data"),
     Input("columns", "value"),
     Input("missing-data", "value"),
@@ -250,9 +251,6 @@ def update_plot(all_data, selected_columns, missing_data, window_years,common_ti
      
 
     fig = go.Figure()
-
-    heatmap_z = []
-    heatmap_ylabels = []
 
     for filename, data in all_data.items():
         df = pd.DataFrame(data)
