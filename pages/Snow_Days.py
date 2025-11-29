@@ -91,9 +91,7 @@ def load_and_clean_snow_data(filename):
 
 
 # == LAYOUT ============================================================================
-layout = dbc.Container([
-    html.H2("Snow Depth Analysis", className="mt-3 mb-4"),
-    
+layout = dbc.Container([    
     dbc.Row([
         dbc.Col([
             html.H4("SELECT DATA"),
