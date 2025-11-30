@@ -7,7 +7,7 @@ import plotly.express as px
 dash.register_page(__name__)
 
 # Read and prepare the data Arberg
-df_A = pd.read_csv('data/Arber.csv', sep=',\s*', engine='python')  # handle spaces after comma
+df_A = pd.read_csv('data/Arber.csv')  # handle spaces after comma
 df_A.columns = df_A.columns.str.strip()  # remove whitespace from column names
 df_A['DATE'] = pd.to_datetime(df_A['DATE'], format='%d.%m.%Y')
 df_A = df_A.replace(-999, pd.NA)
@@ -33,7 +33,7 @@ df_A_desc_1983 = df_A_desc_1983.reset_index().rename(columns={'index': 'Statisti
 
 
 # Read and prepare the data Straubing
-df_St = pd.read_csv('data/Straubing.csv', sep=',\s*', engine='python')  # handle spaces after comma
+df_St = pd.read_csv('data/Straubing.csv')  # handle spaces after comma
 df_St.columns = df_St.columns.str.strip()  # remove whitespace from column names
 df_St['DATE'] = pd.to_datetime(df_St['DATE'], format='%d.%m.%Y')
 df_St = df_St.replace(-999, pd.NA)
@@ -58,7 +58,7 @@ df_St_desc_1951 = df_St_desc_1951.reset_index().rename(columns={'index': 'Statis
 
 
 # Read and prepare the data Schorndorf
-df_Sc = pd.read_csv('data/Schorndorf.csv', sep=',\s*', engine='python')  # handle spaces after comma
+df_Sc = pd.read_csv('data/Schorndorf.csv')  # handle spaces after comma
 df_Sc.columns = df_Sc.columns.str.strip()  # remove whitespace from column names
 df_Sc['DATE'] = pd.to_datetime(df_Sc['DATE'], format='%d.%m.%Y')
 df_Sc = df_Sc.replace(-999, pd.NA)
