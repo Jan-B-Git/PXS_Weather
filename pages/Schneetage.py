@@ -88,21 +88,21 @@ def load_and_clean_snow_data(filename):
 layout = dbc.Container([    
     dbc.Row([
         dbc.Col([
-            html.H4("SELECT DATA"),
+            html.H4("DATEN AUSWÄHLEN"),
             dcc.Dropdown(
                 id="snow-csv-selector",
                 options=[],
                 value=[],
                 multi=True,
-                placeholder="Select CSV file(s)..."
+                placeholder="CSV-Datei(en) auswählen..."
             ),
         ], width=6),
         dbc.Col([
-            html.H5("SETTINGS"),
+            html.H4("EINSTELLUNGEN", style={"visibility": "hidden"}),
             dcc.Checklist(
                 id="snow-analysis-options",
                 options=[
-                    {"label": "Common Timerange", "value": "common_timerange"},
+                    {"label": "Gemeinsamer Zeitraum", "value": "common_timerange"},
                 ],
                 value=[],
                 labelStyle={"display": "block", "margin": "10px 0"}
@@ -116,7 +116,7 @@ layout = dbc.Container([
     # Tabs for different views
     dcc.Tabs(id="snow-tabs", value="tab-timeseries", children=[
         # Tab 1: Timeseries plot
-        dcc.Tab(label="TIMESERIES", value="tab-timeseries", children=[
+        dcc.Tab(label="ZEITREIHE", value="tab-timeseries", children=[
             dcc.Graph(
                 id="snow-timeseries-plot",
                 style={"height": "600px", "margin": "15px"}
@@ -124,7 +124,7 @@ layout = dbc.Container([
         ]),
         
         # Tab 2: Yearly statistics
-        dcc.Tab(label="YEARLY ANALYSIS", value="tab-yearly", children=[
+        dcc.Tab(label="JÄHRLICHE ANALYSE", value="tab-yearly", children=[
             dbc.Row([
                 dbc.Col([
                     dcc.Graph(
@@ -199,9 +199,9 @@ def update_timeseries_plot(all_data, options):
         return {
             "data": [],
             "layout": {
-                "title": "Please select file(s)",
-                "xaxis": {"title": "Date"},
-                "yaxis": {"title": "Snow Depth (cm)"}
+                "title": "Bitte Datei(en) auswählen",
+                "xaxis": {"title": "Datum"},
+                "yaxis": {"title": "Schneehöhe (cm)"}
             }
         }
     
@@ -242,14 +242,14 @@ def update_timeseries_plot(all_data, options):
             name=filename,
         ))
     
-    title = "Snow Depth"
+    title = "Schneehöhe"
     if "common_timerange" in options and common_start and common_end:
-        title += f" (Period: {common_start.strftime('%Y-%m-%d')} - {common_end.strftime('%Y-%m-%d')})"
+        title += f" (Zeitraum: {common_start.strftime('%d.%m.%Y')} - {common_end.strftime('%d.%m.%Y')})"
     
     fig.update_layout(
         title=title,
-        xaxis={"title": "Date", "type": "date"},
-        yaxis={"title": "Snow Depth (cm)"},
+        xaxis={"title": "Datum", "type": "date"},
+        yaxis={"title": "Schneehöhe (cm)"},
         hovermode="x unified",
         template="plotly_white",
         legend={"orientation": "h", "yanchor": "bottom", "y": 1.02}
@@ -267,7 +267,7 @@ def update_timeseries_plot(all_data, options):
 def update_snow_days_per_year(all_data, options):
     """Shows number of snow days per year"""
     if not all_data:
-        return {"data": [], "layout": {"title": "No Data"}}
+        return {"data": [], "layout": {"title": "Keine Daten"}}
     
     common_start = None
     common_end = None
@@ -305,14 +305,14 @@ def update_snow_days_per_year(all_data, options):
             name=filename
         ))
     
-    title = "Number of Snow Days per Year"
+    title = "Anzahl Schneetage pro Jahr"
     if "common_timerange" in options and common_start and common_end:
         title += f" ({common_start.year} - {common_end.year})"
     
     fig.update_layout(
         title=title,
-        xaxis={"title": "Year"},
-        yaxis={"title": "Number of Days with Snow"},
+        xaxis={"title": "Jahr"},
+        yaxis={"title": "Anzahl Tage mit Schnee"},
         template="plotly_white",
         barmode='group'
     )
@@ -329,7 +329,7 @@ def update_snow_days_per_year(all_data, options):
 def update_max_snow_per_year(all_data, options):
     """Shows maximum snow depth per year"""
     if not all_data:
-        return {"data": [], "layout": {"title": "No Data"}}
+        return {"data": [], "layout": {"title": "Keine Daten"}}
     
     # Determine common time range?
     common_start = None
@@ -368,14 +368,14 @@ def update_max_snow_per_year(all_data, options):
             name=filename
         ))
     
-    title = "Maximum Snow Depth per Year"
+    title = "Maximale Schneehöhe pro Jahr"
     if "common_timerange" in options and common_start and common_end:
         title += f" ({common_start.year} - {common_end.year})"
     
     fig.update_layout(
         title=title,
-        xaxis={"title": "Year"},
-        yaxis={"title": "Snow Depth (cm)"},
+        xaxis={"title": "Jahr"},
+        yaxis={"title": "Schneehöhe (cm)"},
         template="plotly_white",
         barmode='group'
     )
