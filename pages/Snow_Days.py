@@ -27,13 +27,11 @@ def load_and_clean_snow_data(filename):
     """
     data_folder = Path("data")
     filepath = data_folder / f"{filename}.csv"
-    
-    print(f"Versuche zu laden: {filepath}")
+
     
     try:
         # Erst alle Spalten laden um zu sehen welche verfügbar sind
         df_test = pd.read_csv(filepath, nrows=1)
-        print(f"Verfügbare Spalten: {df_test.columns.tolist()}")
         
         # Erste Spalte (Datum)
         x_column = df_test.columns[0]
@@ -49,8 +47,6 @@ def load_and_clean_snow_data(filename):
             print(f"FEHLER: Keine Schneehöhen-Spalte gefunden in {df_test.columns.tolist()}")
             return None, None
         
-        print(f"Verwende Datums-Spalte: '{x_column}'")
-        print(f"Verwende Schneehöhen-Spalte: '{snow_column}'")
         
         # Jetzt richtig laden - mit Spaltennamen statt Index
         df = pd.read_csv(filepath, usecols=[x_column, snow_column])
@@ -79,12 +75,10 @@ def load_and_clean_snow_data(filename):
         df['year'] = df[x_column].dt.year
         df['month'] = df[x_column].dt.month
         
-        print(f"Erfolgreich geladen: {len(df)} Zeilen")
         
         return df, x_column
         
     except Exception as e:
-        print(f"Fehler beim Laden von {filename}: {str(e)}")
         import traceback
         traceback.print_exc()
         return None, None
