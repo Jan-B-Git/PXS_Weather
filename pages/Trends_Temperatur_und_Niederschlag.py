@@ -30,7 +30,9 @@ df_A_1983=df_A_numeric[df_A_numeric['DATE'].dt.year == 1983]
 df_A_desc_1983=df_A_1983.drop(columns=['DATE','MESS_DATUM','LUFTTEMP_AM_ERDB_MINIMUM','WINDSPITZE_MAXIMUM','SCHNEEHOEHE','QUALITAETS_NIVEAU','DAMPFDRUCK','BEDECKUNGSGRAD','WINDGESCHWINDIGKEIT','SONNENSCHEINDAUER'])
 df_A_desc_1983 = df_A_desc_1983.describe(include='all')
 df_A_desc_1983 = df_A_desc_1983.reset_index().rename(columns={'index': 'Statistik'})
-
+df_A['YEAR'] = df_A['DATE'].dt.year
+df_A_yearly_temp = df_A.groupby('YEAR')['LUFTTEMPERATUR'].mean().reset_index()
+df_A_yearly_rain = df_A.groupby('YEAR')['NIEDERSCHLAGSHOEHE'].sum().reset_index()
 
 # Read and prepare the data Straubing
 df_St = pd.read_csv('data/Straubing.csv')  # handle spaces after comma
@@ -55,6 +57,10 @@ df_St_1951=df_St_numeric[df_St_numeric['DATE'].dt.year == 1951]
 df_St_desc_1951=df_St_1951.drop(columns=['DATE','MESS_DATUM','LUFTTEMP_AM_ERDB_MINIMUM','WINDSPITZE_MAXIMUM','SCHNEEHOEHE','QUALITAETS_NIVEAU','DAMPFDRUCK','BEDECKUNGSGRAD','WINDGESCHWINDIGKEIT','SONNENSCHEINDAUER'])
 df_St_desc_1951 = df_St_desc_1951.describe(include='all')
 df_St_desc_1951 = df_St_desc_1951.reset_index().rename(columns={'index': 'Statistik'})
+df_St['YEAR'] = df_St['DATE'].dt.year
+df_St_yearly_temp = df_St.groupby('YEAR')['LUFTTEMPERATUR'].mean().reset_index()
+df_St_yearly_rain = df_St.groupby('YEAR')['NIEDERSCHLAGSHOEHE'].sum().reset_index()
+
 
 
 # Read and prepare the data Schorndorf
@@ -80,6 +86,9 @@ df_Sc_1997=df_Sc_numeric[df_Sc_numeric['DATE'].dt.year == 1997]
 df_Sc_desc_1997=df_Sc_1997.drop(columns=['DATE','MESS_DATUM','LUFTTEMP_AM_ERDB_MINIMUM','WINDSPITZE_MAXIMUM','SCHNEEHOEHE','QUALITAETS_NIVEAU','DAMPFDRUCK','BEDECKUNGSGRAD','WINDGESCHWINDIGKEIT','SONNENSCHEINDAUER'])
 df_Sc_desc_1997 = df_Sc_desc_1997.describe(include='all')
 df_Sc_desc_1997 = df_Sc_desc_1997.reset_index().rename(columns={'index': 'Statistik'})
+df_Sc['YEAR'] = df_Sc['DATE'].dt.year
+df_Sc_yearly_temp = df_Sc.groupby('YEAR')['LUFTTEMPERATUR'].mean().reset_index()
+df_Sc_yearly_rain = df_Sc.groupby('YEAR')['NIEDERSCHLAGSHOEHE'].sum().reset_index()
 
 # Careate the figure
 fig = px.line(  
@@ -178,203 +187,234 @@ fig11 = px.line(
     labels={'DATE': 'Datum', ' NIEDERSCHLAGSHOEHE': 'Liter'}
 )
 
-layout = dbc.Container([
-    dbc.Row([
-        dbc.Col([
-            html.H3(['Trends Temperatur und Niederschlag']),
-            html.P([html.B(['Temperatur'])], className='par')
-        ], className='row-titles')
-    ]),
-    # Plot output
-    dbc.Row([
-        dbc.Col([
-            dcc.Dropdown(
-                id='temp-location-dropdown',
-                options=[
-                    {'label': 'Arber', 'value': 'arber'},
-                    {'label': 'Straubing', 'value': 'straubing'},
-                    {'label': 'Schorndorf', 'value': 'schorndorf'},
-                ],
-                value='arber',
-                clearable=False,
-                style={'width': '300px'}
-            ),
-            dcc.Graph(id="temperature-graph",style={'height': '500px'})
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([
-            dcc.Dropdown(
-                id='rain-location-dropdown',
-                options=[
-                    {'label': 'Arber', 'value': 'arber'},
-                    {'label': 'Straubing', 'value': 'straubing'},
-                    {'label': 'Schorndorf', 'value': 'schorndorf'},
-                ],
-                value='arber',
-                clearable=False,
-                style={'width': '300px'}
-            ),
-            dcc.Graph(id="rain-graph",style={'height': '500px'})
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([
-            dcc.Graph(
-                id="Niederschlags-plot-arber-2015",
-                figure=fig6
-            )
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([
-            dcc.Graph(
-                id="Niederschlags-plot-arber-1983",
-                figure=fig7
-            )
-        ])
-    ]),
-        dbc.Row([
-        dbc.Col([
-            dcc.Graph(
-                id="Niederschlags-plot-straubing-2015",
-                figure=fig8
-            )
-        ])
-    ]),
-        dbc.Row([
-        dbc.Col([
-            dcc.Graph(
-                id="Niederschlags-plot-straubing-1951",
-                figure=fig9
-            )
-        ])
-    ]),
-        dbc.Row([
-        dbc.Col([
-            dcc.Graph(
-                id="Niederschlags-plot-schorndorf-2015",
-                figure=fig10
-            )
-        ])
-    ]),
-        dbc.Row([
-        dbc.Col([
-            dcc.Graph(
-                id="Niederschlags-plot-schorndorf-1997",
-                figure=fig11
-            )
-        ])
-    ]),
-    dbc.Row([
-        dbc.Col([
-            html.H4("Descriptive statistics — Arber"),
-            dash_table.DataTable(
-                id='describe-table-arber',
-                columns=[{"name": c, "id": c} for c in df_A_desc_all.columns],
-                data=df_A_desc_all.to_dict('records'),
-                style_table={'overflowX': 'auto'},
-                page_size=10
-            )
-        ])
-    ]),
-        dbc.Row([
-        dbc.Col([
-            html.H4("Descriptive statistics — Arber - 2015"),
-            dash_table.DataTable(
-                id='describe-table-arber-2015',
-                columns=[{"name": c, "id": c} for c in df_A_desc_2015.columns],
-                data=df_A_desc_2015.to_dict('records'),
-                style_table={'overflowX': 'auto'},
-                page_size=10
-            )
-        ])
-    ]),
+fig12 = px.bar(df_A_yearly_temp, x='YEAR', y='LUFTTEMPERATUR', 
+               title='Jährlicher Durchschnitt Temperatur Arber',
+               labels={'YEAR': 'Jahr', 'LUFTTEMPERATUR': 'Temperatur (°C)'})
+
+fig13 = px.bar(df_St_yearly_temp, x='YEAR', y='LUFTTEMPERATUR',
+               title='Jährlicher Durchschnitt Temperatur Straubing',
+               labels={'YEAR': 'Jahr', 'LUFTTEMPERATUR': 'Temperatur (°C)'})
+
+fig14 = px.bar(df_Sc_yearly_temp, x='YEAR', y='LUFTTEMPERATUR',
+               title='Jährlicher Durchschnitt Temperatur Schorndorf',
+               labels={'YEAR': 'Jahr', 'LUFTTEMPERATUR': 'Temperatur (°C)'})
+
+fig15 = px.bar(df_A_yearly_rain, x='YEAR', y='NIEDERSCHLAGSHOEHE',
+               title='Jährliche Gesamtniederschlagshöhe Arber',
+               labels={'YEAR': 'Jahr', 'NIEDERSCHLAGSHOEHE': 'Niederschlag (mm)'})
+
+fig16 = px.bar(df_St_yearly_rain, x='YEAR', y='NIEDERSCHLAGSHOEHE',
+               title='Jährliche Gesamtniederschlagshöhe Straubing',
+               labels={'YEAR': 'Jahr', 'NIEDERSCHLAGSHOEHE': 'Niederschlag (mm)'})
+
+fig17 = px.bar(df_Sc_yearly_rain, x='YEAR', y='NIEDERSCHLAGSHOEHE',
+               title='Jährliche Gesamtniederschlagshöhe Schorndorf',
+               labels={'YEAR': 'Jahr', 'NIEDERSCHLAGSHOEHE': 'Niederschlag (mm)'})
+
+
+layout = dbc.Container(
+    dbc.Tabs([
+        dbc.Tab(label="Graphen", tab_id="tab-graphs", children=[
             dbc.Row([
-        dbc.Col([
-            html.H4("Descriptive statistics — Arber - 1983"),
-            dash_table.DataTable(
-                id='describe-table-arber-1983',
-                columns=[{"name": c, "id": c} for c in df_A_desc_1983.columns],
-                data=df_A_desc_1983.to_dict('records'),
-                style_table={'overflowX': 'auto'},
-                page_size=10
-            )
-        ])
-    ]),
-        dbc.Row([
-        dbc.Col([
-            html.H4("Descriptive statistics — Straubing"),
-            dash_table.DataTable(
-                id='describe-table-straubing',
-                columns=[{"name": c, "id": c} for c in df_St_desc_all.columns],
-                data=df_St_desc_all.to_dict('records'),
-                style_table={'overflowX': 'auto'},
-                page_size=10
-            )
-        ])
-    ]),
+                dbc.Col([
+                    html.H3(['Trends Temperatur und Niederschlag']),
+                    html.P([html.B(['Temperatur'])], className='par')
+                ], className='row-titles')
+            ]),
+            # Plot output
             dbc.Row([
-        dbc.Col([
-            html.H4("Descriptive statistics — Straubing - 2015"),
-            dash_table.DataTable(
-                id='describe-table-straubing-2015',
-                columns=[{"name": c, "id": c} for c in df_St_desc_2015.columns],
-                data=df_St_desc_2015.to_dict('records'),
-                style_table={'overflowX': 'auto'},
-                page_size=10
-            )
-        ])
-    ]),
+                dbc.Col([
+                    dcc.Dropdown(
+                        id='temp-location-dropdown',
+                        options=[
+                            {'label': 'Arber', 'value': 'arber'},
+                            {'label': 'Straubing', 'value': 'straubing'},
+                            {'label': 'Schorndorf', 'value': 'schorndorf'},
+                        ],
+                        value='arber',
+                        clearable=False,
+                        style={'width': '300px'}
+                    ),
+                    dcc.Graph(id="temperature-graph",style={'height': '500px'})
+                ])
+            ]),
             dbc.Row([
-        dbc.Col([
-            html.H4("Descriptive statistics — Straubing - 1951"),
-            dash_table.DataTable(
-                id='describe-table-straubing-1951',
-                columns=[{"name": c, "id": c} for c in df_St_desc_1951.columns],
-                data=df_St_desc_1951.to_dict('records'),
-                style_table={'overflowX': 'auto'},
-                page_size=10
-            )
-        ])
-    ]),
-        dbc.Row([
-        dbc.Col([
-            html.H4("Descriptive statistics — Schorndorf"),
-            dash_table.DataTable(
-                id='describe-table-schorndorf',
-                columns=[{"name": c, "id": c} for c in df_Sc_desc_all.columns],
-                data=df_Sc_desc_all.to_dict('records'),
-                style_table={'overflowX': 'auto'},
-                page_size=10
-            )
-        ])
-    ]),
+                dbc.Col([
+                    dcc.Dropdown(
+                        id='rain-location-dropdown',
+                        options=[
+                            {'label': 'Arber', 'value': 'arber'},
+                            {'label': 'Straubing', 'value': 'straubing'},
+                            {'label': 'Schorndorf', 'value': 'schorndorf'},
+                        ],
+                        value='arber',
+                        clearable=False,
+                        style={'width': '300px'}
+                    ),
+                    dcc.Graph(id="rain-graph",style={'height': '500px'})
+                ])
+            ]),
             dbc.Row([
-        dbc.Col([
-            html.H4("Descriptive statistics — schorndorf - 2015"),
-            dash_table.DataTable(
-                id='describe-table-schorndorf-2015',
-                columns=[{"name": c, "id": c} for c in df_Sc_desc_2015.columns],
-                data=df_Sc_desc_2015.to_dict('records'),
-                style_table={'overflowX': 'auto'},
-                page_size=10
-            )
+                dbc.Col([
+                    dcc.Dropdown(
+                        id='rain-location-dropdown-2015',
+                        options=[
+                            {'label': 'Arber', 'value': 'arber'},
+                            {'label': 'Straubing', 'value': 'straubing'},
+                            {'label': 'Schorndorf', 'value': 'schorndorf'},
+                        ],
+                        value='arber',
+                        clearable=False,
+                        style={'width': '300px'}
+                    ),
+                    dcc.Graph(id="rain-graph-2015",style={'height': '500px'})
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    dcc.Dropdown(
+                        id='rain-location-dropdown-history',
+                        options=[
+                            {'label': 'Arber', 'value': 'arber'},
+                            {'label': 'Straubing', 'value': 'straubing'},
+                            {'label': 'Schorndorf', 'value': 'schorndorf'},
+                        ],
+                        value='arber',
+                        clearable=False,
+                        style={'width': '300px'}
+                    ),
+                    dcc.Graph(id="rain-graph-history",style={'height': '500px'})
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.P([html.B(['Jährliche Durchschnitte'])], className='par')
+                ], className='row-titles')
+            ]),
+            dbc.Row([
+                dbc.Col([dcc.Graph(figure=fig12)]),
+                dbc.Col([dcc.Graph(figure=fig13)]),
+                dbc.Col([dcc.Graph(figure=fig14)])
+            ]),
+            dbc.Row([
+                dbc.Col([dcc.Graph(figure=fig15)]),
+                dbc.Col([dcc.Graph(figure=fig16)]),
+                dbc.Col([dcc.Graph(figure=fig17)])
+            ]),
+        ]),
+        dbc.Tab(label="Tabellen", tab_id="tab-tables", children=[
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Descriptive statistics — Arber"),
+                    dash_table.DataTable(
+                        id='describe-table-arber',
+                        columns=[{"name": c, "id": c} for c in df_A_desc_all.columns],
+                        data=df_A_desc_all.to_dict('records'),
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
+                    )
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Descriptive statistics — Arber - 2015"),
+                    dash_table.DataTable(
+                        id='describe-table-arber-2015',
+                        columns=[{"name": c, "id": c} for c in df_A_desc_2015.columns],
+                        data=df_A_desc_2015.to_dict('records'),
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
+                    )
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Descriptive statistics — Arber - 1983"),
+                    dash_table.DataTable(
+                        id='describe-table-arber-1983',
+                        columns=[{"name": c, "id": c} for c in df_A_desc_1983.columns],
+                        data=df_A_desc_1983.to_dict('records'),
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
+                    )
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Descriptive statistics — Straubing"),
+                    dash_table.DataTable(
+                        id='describe-table-straubing',
+                        columns=[{"name": c, "id": c} for c in df_St_desc_all.columns],
+                        data=df_St_desc_all.to_dict('records'),
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
+                    )
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Descriptive statistics — Straubing - 2015"),
+                    dash_table.DataTable(
+                        id='describe-table-straubing-2015',
+                        columns=[{"name": c, "id": c} for c in df_St_desc_2015.columns],
+                        data=df_St_desc_2015.to_dict('records'),
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
+                    )
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Descriptive statistics — Straubing - 1951"),
+                    dash_table.DataTable(
+                        id='describe-table-straubing-1951',
+                        columns=[{"name": c, "id": c} for c in df_St_desc_1951.columns],
+                        data=df_St_desc_1951.to_dict('records'),
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
+                    )
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Descriptive statistics — Schorndorf"),
+                    dash_table.DataTable(
+                        id='describe-table-schorndorf',
+                        columns=[{"name": c, "id": c} for c in df_Sc_desc_all.columns],
+                        data=df_Sc_desc_all.to_dict('records'),
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
+                    )
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Descriptive statistics — Schorndorf - 2015"),
+                    dash_table.DataTable(
+                        id='describe-table-schorndorf-2015',
+                        columns=[{"name": c, "id": c} for c in df_Sc_desc_2015.columns],
+                        data=df_Sc_desc_2015.to_dict('records'),
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
+                    )
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.H4("Descriptive statistics — Schorndorf - 1997"),
+                    dash_table.DataTable(
+                        id='describe-table-schorndorf-1996',
+                        columns=[{"name": c, "id": c} for c in df_Sc_desc_1997.columns],
+                        data=df_Sc_desc_1997.to_dict('records'),
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
+                    )
+                ])
+            ]),
         ])
     ]),
-            dbc.Row([
-        dbc.Col([
-            html.H4("Descriptive statistics — schorndorf - 1997"),
-            dash_table.DataTable(
-                id='describe-table-schorndorf-1996',
-                columns=[{"name": c, "id": c} for c in df_Sc_desc_1997.columns],
-                data=df_Sc_desc_1997.to_dict('records'),
-                style_table={'overflowX': 'auto'},
-                page_size=10
-            )
-        ])
-    ])
-], fluid=True)
+    fluid=True
+)
 
 @dash.callback(
     Output('temperature-graph', 'figure'),
@@ -400,4 +440,31 @@ def update_rain_graph(location):
         return fig4
     elif location == 'schorndorf':
         return fig5
+    return fig3
+
+
+@dash.callback(
+    Output('rain-graph-2015', 'figure'),
+    Input('rain-location-dropdown-2015', 'value')
+)
+def update_rain_graph_2015(location):
+    if location == 'arber':
+        return fig6
+    elif location == 'straubing':
+        return fig8
+    elif location == 'schorndorf':
+        return fig10
+    return fig3
+
+@dash.callback(
+    Output('rain-graph-history', 'figure'),
+    Input('rain-location-dropdown-history', 'value')
+)
+def update_rain_graph_2015(location):
+    if location == 'arber':
+        return fig7
+    elif location == 'straubing':
+        return fig9
+    elif location == 'schorndorf':
+        return fig11
     return fig3
