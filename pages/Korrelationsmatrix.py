@@ -25,21 +25,23 @@ df_Sc = df_Sc[(df_Sc['DATE'].dt.year >= 1997) & (df_Sc['DATE'].dt.year <= 2015)]
 available_columns = {
     'LUFTTEMPERATUR': 'Lufttemperatur',
     'NIEDERSCHLAGSHOEHE': 'Niederschlagshöhe',
-    'LUFTTEMP_AM_ERDB_MAXIMUM': 'Lufttemperatur Maximum',
-    'LUFTTEMP_AM_ERDB_MINIMUM': 'Lufttemperatur Minimum',
+    'LUFTTEMPERATUR_MAXIMUM': 'Lufttemperatur Maximum',
+    'LUFTTEMPERATUR_MINIMUM': 'Lufttemperatur Minimum',
     'WINDSPITZE_MAXIMUM': 'Windspitze Maximum',
     'SCHNEEHOEHE': 'Schneehöhe',
     'DAMPFDRUCK': 'Dampfdruck',
     'BEDECKUNGSGRAD': 'Bedeckungsgrad',
     'WINDGESCHWINDIGKEIT': 'Windgeschwindigkeit',
-    'SONNENSCHEINDAUER': 'Sonnenscheindauer'
+    'SONNENSCHEINDAUER': 'Sonnenscheindauer',
+    'LUFTDRUCK_STATIONSHOEHE': 'Luftdruck Stationshöhe',
+    'REL_FEUCHTE': 'Relative Feuchte',
+    'LUFTTEMP_AM_ERDB_MINIMUM': 'Lufttemperatur am Erdboden Minimum'
 }
 
 layout = dbc.Container([
     dbc.Row([
         dbc.Col([
-            html.H3(['Korrelationsanalyse']),
-            html.P([html.B(['1997 - 2015'])], className='par')
+            html.H3(['Korrelationsanalyse'])
         ], className='row-titles')
     ]),
     dbc.Row([
