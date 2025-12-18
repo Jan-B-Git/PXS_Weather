@@ -3,6 +3,9 @@ from dash import html, dcc, dash_table, Input, Output
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
+from scipy import stats
+from statsmodels.formula.api import ols
+import numpy as np
 
 dash.register_page(__name__)
 
@@ -202,6 +205,16 @@ fig11 = px.line(
 fig12 = px.line(df_A_yearly_temp, x='YEAR', y='LUFTTEMPERATUR', 
                title='Jährlicher Durchschnitt Temperatur Arber',
                labels={'YEAR': 'Jahr', 'LUFTTEMPERATUR': 'Temperatur (°C)'})
+
+
+# Regressionsgerade für Arber mit OLS
+model_A = ols('LUFTTEMPERATUR ~ YEAR', data=df_A_yearly_temp).fit()
+line_A = model_A.predict(df_A_yearly_temp)
+r_value_A_squared = model_A.rsquared
+
+fig12.add_scatter(x=df_A_yearly_temp['YEAR'], y=line_A, mode='lines', 
+                 name=f'Trend (R²={r_value_A_squared:.3f})',
+                 line=dict(color='red', dash='dash'))
 
 fig13 = px.line(df_St_yearly_temp, x='YEAR', y='LUFTTEMPERATUR',
                title='Jährlicher Durchschnitt Temperatur Straubing',
@@ -693,20 +706,3 @@ def update_statistics_table_3(location, year):
     columns = [{"name": c, "id": c} for c in df.columns]
     data = df.to_dict('records')
     return columns, data
-
-
-
-
-
-# dbc.Row([
-#                 dbc.Col([
-#                     html.H4("Descriptive statistics — Arber - 2015"),
-#                     dash_table.DataTable(
-#                         id='describe-table-arber-2015',
-#                         columns=[{"name": c, "id": c} for c in df_A_desc_2015.columns],
-#                         data=df_A_desc_2015.to_dict('records'),
-#                         style_table={'overflowX': 'auto'},
-#                         page_size=10
-#                     )
-#                 ])
-#             ]),
