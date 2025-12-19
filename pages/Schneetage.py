@@ -4,6 +4,9 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import pandas as pd
 from pathlib import Path
+from scipy import stats
+from statsmodels.formula.api import ols
+import numpy as np
 
 # ----- Page Definition ------------------------------------------------------------------
 dash.register_page(__name__, path="/snow")
@@ -298,17 +301,41 @@ def update_snow_days_per_year(all_data, options):
         
         # Count snow days (snow depth > 0)
         snow_days_per_year = df[df["SCHNEEHOEHE"] > 0].groupby("year").size()
-        
+
+        # Remove first and last year (incomplete data)
+        if len(snow_days_per_year) > 2:
+            snow_days_per_year = snow_days_per_year.iloc[1:-1]
+
         fig.add_trace(go.Bar(
             x=snow_days_per_year.index,
             y=snow_days_per_year.values,
             name=filename
         ))
+
+        # Regression for snow days trend
+        if len(snow_days_per_year) > 1:
+            regression_df = pd.DataFrame({
+                'year': snow_days_per_year.index,
+                'snow_days': snow_days_per_year.values
+            })
+            model = ols('snow_days ~ year', data=regression_df).fit()
+            line = model.predict(regression_df)
+            r_squared = model.rsquared
+
+            fig.add_trace(go.Scatter(
+                x=regression_df['year'],
+                y=line,
+                mode='lines',
+                name=f'{filename} Trend (R²={r_squared:.3f})',
+                line=dict(dash='dash')
+            ))
     
     title = "Anzahl Schneetage pro Jahr"
     if "common_timerange" in options and common_start and common_end:
         title += f" ({common_start.year} - {common_end.year})"
     
+
+
     fig.update_layout(
         title=title,
         xaxis={"title": "Jahr"},
@@ -361,7 +388,11 @@ def update_max_snow_per_year(all_data, options):
         
         # Maximum snow depth per year
         max_snow_per_year = df.groupby("year")["SCHNEEHOEHE"].max()
-        
+
+        # Remove first and last year (incomplete data)
+        if len(max_snow_per_year) > 2:
+            max_snow_per_year = max_snow_per_year.iloc[1:-1]
+
         fig.add_trace(go.Bar(
             x=max_snow_per_year.index,
             y=max_snow_per_year.values,
